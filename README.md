@@ -1,0 +1,1 @@
+# generative-adversarial-txt-2-image-synthesis
