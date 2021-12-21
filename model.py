@@ -5,24 +5,17 @@ import tensorflow.keras.layers as tfkl
 class DCGenerator(tfkl.Layer):
     def __init__(self):
         super(DCGenerator, self).__init__()
-        # Compress the embedding 
-
-        self.input_layer = tf.keras.Sequential(
-            [
+        self.embedding_layer = tf.keras.Sequential([
                 tfkl.Dense(128, activation=None),
                 tfkl.LeakyReLU(),
-            ]
-        )
-        self.layer1 = tf.keras.Sequential(
-            [
+        ])
+        self.input_layer = tf.keras.Sequential([
                 tfkl.Dense(2048, use_bias=False),
                 tfkl.BatchNormalization(),
                 tfkl.ReLU(),
                 tfkl.Reshape((-1, 4, 4, 512)),
-            ]
-        )
-        self.residual_layer1 = tf.keras.Sequential(
-            [
+        ])
+        self.residual_layer1 = tf.keras.Sequential([
                 tfkl.Conv2D(
                     128, (1, 1), strides=(1, 1), padding="valid", use_bias=False
                 ),
@@ -38,11 +31,8 @@ class DCGenerator(tfkl.Layer):
                 ),
                 tfkl.BatchNormalization(),
 
-            ]
-        )
-
-        self.inter_layer = tf.keras.Sequential(
-            [
+        ])
+        self.inter_layer = tf.keras.Sequential([
                 tfkl.Conv2DTranspose(
                     256, (4, 4), strides=(2, 2), padding="same", use_bias=False
                 ),
@@ -50,11 +40,9 @@ class DCGenerator(tfkl.Layer):
                     256, (3, 3), strides=(1, 1), padding="same", use_bias=False
                 ),
                 tfkl.BatchNormalization(),
-            ]
-        )
+            ])
 
-        self.residual_layer2 = tf.keras.Sequential(
-            [
+        self.residual_layer2 = tf.keras.Sequential([
                 tfkl.Conv2D(
                     64, (1, 1), strides=(1, 1), padding="valid", use_bias=False
                 ),
@@ -69,10 +57,8 @@ class DCGenerator(tfkl.Layer):
                     256, (3, 3), strides=(1, 1), padding="same", use_bias=False
                 ),
                 tfkl.BatchNormalization(),
-            ]
-        )
-        self.last_layer = tf.keras.Sequential(
-            [
+            ])
+        self.last_layer = tf.keras.Sequential([
                 tfkl.Conv2DTranspose(
                     128, (4, 4), strides=(2, 2), padding="same", use_bias=False
                 ),
@@ -96,15 +82,15 @@ class DCGenerator(tfkl.Layer):
                     3, (3, 3), strides=(1, 1), padding="same", use_bias=False
                 ),
                 tfkl.tanh()
-            ]
-        )
+            ])
 
-    def call(self, x, z):
-        x = self.input_layer(x)
-        x = tf.concat([z, x], 1)
-        out1 = self.layer1(x)
-        x = self.residual_layer1(out1)
-        x = tf.add(out1, x)
+    def call(self, z, embed):
+        embed = self.embedding_layer(embed)
+        x = tf.concat([z, embed], 1)
+        out_input = self.input_layer(x)
+
+        x = self.residual_layer1(out_input)
+        x = tf.add(out_input, x)
         x = tfkl.relu(x)
         out2 = self.inter_layer(x)
         x = self.residual_layer2(out2)
@@ -117,99 +103,65 @@ class DCGenerator(tfkl.Layer):
 class DCDiscriminator(tfkl.Layer):
     def __init__(self):
         super(DCDiscriminator, self).__init__()
-        self.layer1 = tf.keras.Sequential(
-            [
-                tfkl.Conv2D(
-                    filters=64, kernel_size=(4, 4), strides=(2, 2), padding="same"
-                ),
-                tfkl.LeakyReLU(0.2),
-            ]
-        )
-        self.layer2 = tf.keras.Sequential(
-            [
-                tfkl.Conv2D(filters=128, kernel_size=(4, 4), strides=(2, 2), padding="same"),
-                tfkl.BatchNormalization(),
-                tfkl.LeakyReLU(0.2),
-            ]
-        )
-        self.layer3 = tf.keras.Sequential(
-            [
-                tfkl.Conv2D(filters=256, kernel_size=(4, 4), strides=(2, 2), padding="same"),
-                tfkl.BatchNormalization(),
-                tfkl.LeakyReLU(0.2),
-            ]
-        )
-        self.layer4 = tf.keras.Sequential(
-            [
-                tfkl.Conv2D(filters=512, kernel_size=(4, 4), strides=(2, 2), padding="same"),
-                tfkl.BatchNormalization(),
-                tfkl.LeakyReLU(0.2),
-            ]
-        )
+        self.input_layer = tf.keras.Sequential([
+            tfkl.Conv2D(
+                filters=64, kernel_size=(4, 4), strides=(2, 2), padding="same"
+            ),
+            tfkl.LeakyReLU(0.2),
+            tfkl.Conv2D(filters=128, kernel_size=(4, 4), strides=(2, 2), padding="same"),
+            tfkl.BatchNormalization(),
+            tfkl.LeakyReLU(0.2),
+            tfkl.Conv2D(filters=256, kernel_size=(4, 4), strides=(2, 2), padding="same"),
+            tfkl.BatchNormalization(),
+            tfkl.LeakyReLU(0.2),
+            tfkl.Conv2D(filters=512, kernel_size=(4, 4), strides=(2, 2), padding="same"),
+            tfkl.BatchNormalization(),
+            tfkl.LeakyReLU(0.2),
+        ])
 
         # Residual layer
-        self.layer5 = tf.keras.Sequential(
-            [
-                tfkl.Conv2D(filters=128, kernel_size=(1, 1), strides=(1, 1), padding="same"),
-                tfkl.BatchNormalization(),
-                tfkl.LeakyReLU(0.2),
-            ]
-        )
-        self.layer6 = tf.keras.Sequential(
-            [
-                tfkl.Conv2D(filters=128, kernel_size=(3, 3), strides=(1, 1), padding="same"),
-                tfkl.BatchNormalization(),
-                tfkl.LeakyReLU(0.2),
-            ]
-        )
-        self.layer7 = tf.keras.Sequential(
-            [
-                tfkl.Conv2D(filters=512, kernel_size=(3, 3), strides=(1, 1), padding="same"),
-                tfkl.BatchNormalization(),
-            ]
-
-        )
-        self.layer8 = tfkl.LeakyReLU(0.2)
-        # TODO: maybe change 128
-        self.layer9 = tf.keras.Sequential(
-            [
+        self.residual_layer = tf.keras.Sequential([
+            tfkl.Conv2D(filters=128, kernel_size=(1, 1), strides=(1, 1), padding="same"),
+            tfkl.BatchNormalization(),
+            tfkl.LeakyReLU(0.2),
+            tfkl.Conv2D(filters=128, kernel_size=(3, 3), strides=(1, 1), padding="same"),
+            tfkl.BatchNormalization(),
+            tfkl.LeakyReLU(0.2),
+            tfkl.Conv2D(filters=512, kernel_size=(3, 3), strides=(1, 1), padding="same"),
+            tfkl.BatchNormalization(),
+        ])
+        self.LeakyRelu = tfkl.LeakyReLU(0.2)
+        self.embedding_layer = tf.keras.Sequential([
                 tfkl.Dense(128, activation=None),
                 tfkl.LeakyReLU(),
-            ]
-        )
-        self.layer10 = tf.keras.Sequential(
-            [
+        ])
+        self.output_layer = tf.keras.Sequential([
                 tfkl.Conv2D(filters=512, kernel_size=(1, 1), strides=(1, 1), padding="valid"),
                 tfkl.BatchNormalization(),
                 tfkl.LeakyReLU(0.2),
-            ]
-        )
-        self.layer11 = tfkl.Conv2D(filters=1, kernel_size=(2, 2), strides=(2, 2), padding="valid")
-        self.layer12 = tfkl.sigmoid()
+                tfkl.Conv2D(filters=1, kernel_size=(2, 2), strides=(2, 2), padding="valid"),
+            ])
+        self.Sigmoid = tfkl.sigmoid()
 
-    def call(self, x):
-        x = self.layer1(x)
-        x = self.layer2(x)
-        x = self.layer3(x)
-        out4 = self.layer4(x)
-        x = self.layer5(out4)
-        x = self.layer6(x)
-        x = self.layer7(x)
-        x = tf.add(x, out4)
-        x = self.layer8(x)
-        discr_out = self.layer9(x)
-        net_embed = tf.expand_dims(tf.expand_dims(x, 1), 1)
-        net_embed = tf.tile(net_embed, [1, 4, 4, 1])
-        x = tf.concat([discr_out, net_embed], axis=3)
-        x = self.layer10(x)
-        x = self.layer11(x)
-        out_sigmoid = self.layer12(x)
-        return out_sigmoid, x
+    def call(self, x, embed):
+        out1 = self.input_layer(x)
+        x = self.residual_layer(out1)
+        x = tf.add(x, out1)
+        x = self.LeakyRelu(x)
+        embed = self.embedding_layer(embed)
+        embed = tf.expand_dims(tf.expand_dims(embed, 1), 1)
+        embed = tf.tile(embed, [1, 4, 4, 1])
+        x = tf.concat([x, embed], axis=3)
+        x = self.output_layer(x)
+        return self.Sigmoid(x), x
 
 
 class GAN(tf.keras.Model):
     def __init__(self):
         super(GAN, self).__init__()
+
+        self.noise_dim = 100
+        self.batch_size = 16
 
         self.generator = DCGenerator()
         self.discriminator = DCDiscriminator()
@@ -232,19 +184,19 @@ class GAN(tf.keras.Model):
     def generator_loss(self, generated_output):
         return self.cross_entropy(tf.ones_like(generated_output), generated_output)
 
-    def generate_sample(self):
-        noise = tf.random.normal([self.config["batch_size"], self.config["noise_dim"]])
-        generated_sample = self.generator(noise, training=True)
+    def generate_sample(self, embed):
+        noise = tf.random.normal([self.batch_size, self.noise_dim])
+        generated_sample = self.generator(noise, embed)
         return generated_sample
 
-    def train_step(self, x):
-        noise = tf.random.normal([self.config["batch_size"], self.config["noise_dim"]])
+    def train_step(self, x, embed):
+        noise = tf.random.normal([self.batch_size, self.noise_dim])
 
         with tf.GradientTape() as discriminator_tape, tf.GradientTape() as generator_tape:
-            generated_samples = self.generator(noise, training=True)
+            generated_samples = self.generator(noise, embed)
 
-            real_output = self.discriminator(x, training=True)
-            fake_output = self.discriminator(generated_samples, training=True)
+            real_output = self.discriminator(x, embed)
+            fake_output = self.discriminator(generated_samples, embed)
 
             discriminator_loss = self.discriminator_loss(real_output, fake_output)
             generator_loss = self.generator_loss(fake_output)
@@ -265,5 +217,5 @@ class GAN(tf.keras.Model):
 
         return discriminator_loss, generator_loss
 
-    def call(self, x):
-        return self.train_step(x)
+    def call(self, x, embed):
+        return self.train_step(x, embed)
