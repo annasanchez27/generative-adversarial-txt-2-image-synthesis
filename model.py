@@ -1,5 +1,5 @@
-import tensorflow.keras.layers as tfkl
 import tensorflow as tf
+import tensorflow.keras.layers as tfkl
 
 
 class DCGenerator(tfkl.Layer):
@@ -59,29 +59,91 @@ class DCDiscriminator(tfkl.Layer):
         self.layer1 = tf.keras.Sequential(
             [
                 tfkl.Conv2D(
-                    64, (5, 5), strides=(2, 2), padding="same", input_shape=[28, 28, 1]
+                    filters=64, kernel_size=(4, 4), strides=(2, 2), padding="same"
                 ),
-                tfkl.BatchNormalization(),
-                tfkl.LeakyReLU(),
-                tfkl.Dropout(0.3),
+                tfkl.LeakyReLU(0.2),
             ]
         )
         self.layer2 = tf.keras.Sequential(
             [
-                tfkl.Conv2D(128, (5, 5), strides=(2, 2), padding="same"),
+                tfkl.Conv2D(filters=128, kernel_size=(4, 4), strides=(2, 2), padding="same"),
                 tfkl.BatchNormalization(),
-                tfkl.LeakyReLU(),
-                tfkl.Dropout(0.3),
-                tfkl.Flatten(),
+                tfkl.LeakyReLU(0.2),
             ]
         )
-        self.out = tfkl.Dense(1)
+        self.layer3 = tf.keras.Sequential(
+            [
+                tfkl.Conv2D(filters=256, kernel_size=(4, 4), strides=(2, 2), padding="same"),
+                tfkl.BatchNormalization(),
+                tfkl.LeakyReLU(0.2),
+            ]
+        )
+        self.layer4 = tf.keras.Sequential(
+            [
+                tfkl.Conv2D(filters=512, kernel_size=(4, 4), strides=(2, 2), padding="same"),
+                tfkl.BatchNormalization(),
+                tfkl.LeakyReLU(0.2),
+            ]
+        )
+
+        # Residual layer
+        self.layer5 = tf.keras.Sequential(
+            [
+                tfkl.Conv2D(filters=128, kernel_size=(1, 1), strides=(1, 1), padding="same"),
+                tfkl.BatchNormalization(),
+                tfkl.LeakyReLU(0.2),
+            ]
+        )
+        self.layer6 = tf.keras.Sequential(
+            [
+                tfkl.Conv2D(filters=128, kernel_size=(3, 3), strides=(1, 1), padding="same"),
+                tfkl.BatchNormalization(),
+                tfkl.LeakyReLU(0.2),
+            ]
+        )
+        self.layer7 = tf.keras.Sequential(
+            [
+                tfkl.Conv2D(filters=512, kernel_size=(3, 3), strides=(1, 1), padding="same"),
+                tfkl.BatchNormalization(),
+            ]
+
+        )
+        self.layer8 = tfkl.LeakyReLU(0.2)
+        # TODO: maybe change 128
+        self.layer9 = tf.keras.Sequential(
+            [
+                tfkl.Dense(128, activation=None),
+                tfkl.LeakyReLU(),
+            ]
+        )
+        self.layer10 = tf.keras.Sequential(
+            [
+                tfkl.Conv2D(filters=512, kernel_size=(1, 1), strides=(1, 1), padding="valid"),
+                tfkl.BatchNormalization(),
+                tfkl.LeakyReLU(0.2),
+            ]
+        )
+        self.layer11 = tfkl.Conv2D(filters=1, kernel_size=(2, 2), strides=(2, 2), padding="valid")
+        self.layer12 = tfkl.sigmoid()
 
     def call(self, x):
         x = self.layer1(x)
         x = self.layer2(x)
-        x = self.out(x)
-        return x
+        x = self.layer3(x)
+        out4 = self.layer4(x)
+        x = self.layer5(out4)
+        x = self.layer6(x)
+        x = self.layer7(x)
+        x = tf.add(x, out4)
+        x = self.layer8(x)
+        discr_out = self.layer9(x)
+        net_embed = tf.expand_dims(tf.expand_dims(x, 1), 1)
+        net_embed = tf.tile(net_embed, [1, 4, 4, 1])
+        x = tf.concat([discr_out, net_embed], axis=3)
+        x = self.layer10(x)
+        x = self.layer11(x)
+        out_sigmoid = self.layer12(x)
+        return out_sigmoid, x
 
 
 class GAN(tf.keras.Model):
