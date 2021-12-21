@@ -3,7 +3,7 @@ from model import GAN
 
 
 def train(model):
-    dataset = TextDataset("", 32)
+    dataset = TextDataset("", 64)
     dataset.train = dataset.get_data("data/train/")
 
     for epoch in range(10):
@@ -12,7 +12,6 @@ def train(model):
         for idx in range(0, updates_per_epoch):
             images, wrong_images, embed, _, _ = dataset.train.next_batch(16, 4, embeddings=True, wrong_img=True)
             discriminator_loss, generator_loss = model(images, embed)
-            print(discriminator_loss, generator_loss)
 
 
 def main():
