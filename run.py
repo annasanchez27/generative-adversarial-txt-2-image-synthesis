@@ -1,24 +1,18 @@
-import tensorflow as tf
-import yaml
 from data import TextDataset
-import numpy as np
 from model import GAN
 
 
 def train(model):
     dataset = TextDataset("", 32)
+    dataset.train = dataset.get_data("data/train/")
 
     for epoch in range(10):
-        print(f"Epoch nr: {epoch}")
-        for images, wrong_images, embed, _, _ in dataset.train.next_batch(16, 4, embeddings=True, wrong_img=True):
-            discriminator_loss, generator_loss = model(train_batch)
+        updates_per_epoch = dataset.train.num_examples // 16
 
-            if step % 100 == 0:
-                print(
-                    f"Step {step}: Discriminator loss = {discriminator_loss}, Generator loss: {generator_loss}"
-                )
-
-        generated_samples = model.generate_sample()
+        for idx in range(0, updates_per_epoch):
+            images, wrong_images, embed, _, _ = dataset.train.next_batch(16, 4, embeddings=True, wrong_img=True)
+            discriminator_loss, generator_loss = model(images, embed)
+            print(discriminator_loss, generator_loss)
 
 
 def main():

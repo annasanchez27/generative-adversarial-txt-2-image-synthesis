@@ -1,5 +1,6 @@
 import tensorflow as tf
 import tensorflow.keras.layers as tfkl
+import tensorflow.keras.activations as tfa
 
 
 class DCGenerator(tfkl.Layer):
@@ -81,7 +82,7 @@ class DCGenerator(tfkl.Layer):
                 tfkl.Conv2D(
                     3, (3, 3), strides=(1, 1), padding="same", use_bias=False
                 ),
-                tfkl.tanh()
+                tfkl.Activation(tfa.relu),
             ])
 
     def call(self, z, embed):
@@ -141,7 +142,7 @@ class DCDiscriminator(tfkl.Layer):
                 tfkl.LeakyReLU(0.2),
                 tfkl.Conv2D(filters=1, kernel_size=(2, 2), strides=(2, 2), padding="valid"),
             ])
-        self.Sigmoid = tfkl.sigmoid()
+        self.Sigmoid = tfkl.Activation(tfa.sigmoid),
 
     def call(self, x, embed):
         out1 = self.input_layer(x)
