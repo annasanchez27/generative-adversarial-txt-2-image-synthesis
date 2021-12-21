@@ -5,9 +5,17 @@ import tensorflow as tf
 class DCGenerator(tfkl.Layer):
     def __init__(self):
         super(DCGenerator, self).__init__()
+        # Compress the embedding 
+
+        self.input_layer = tf.keras.Sequential(
+            [
+                tfkl.Dense(128, activation=None),
+                tfkl.LeakyReLU(),
+            ]
+        )
         self.layer1 = tf.keras.Sequential(
             [
-                tfkl.Dense(7 * 7 * 256, use_bias=False, input_shape=(100,)),
+                tfkl.Dense(7 * 7 * 256, use_bias=False),
                 tfkl.BatchNormalization(),
                 tfkl.ReLU(),
                 tfkl.Reshape((7, 7, 256)),
@@ -35,7 +43,9 @@ class DCGenerator(tfkl.Layer):
             1, (5, 5), strides=(2, 2), padding="same", use_bias=False, activation="tanh"
         )
 
-    def call(self, x):
+    def call(self, x, z):
+        x = self.input_layer(x)
+        x = tf.concat([z, x], 1)
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
