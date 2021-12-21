@@ -15,41 +15,102 @@ class DCGenerator(tfkl.Layer):
         )
         self.layer1 = tf.keras.Sequential(
             [
-                tfkl.Dense(7 * 7 * 256, use_bias=False),
+                tfkl.Dense(2048, use_bias=False),
                 tfkl.BatchNormalization(),
                 tfkl.ReLU(),
-                tfkl.Reshape((7, 7, 256)),
+                tfkl.Reshape((-1, 4, 4, 512)),
             ]
         )
-        self.layer2 = tf.keras.Sequential(
+        self.residual_layer1 = tf.keras.Sequential(
             [
-                tfkl.Conv2DTranspose(
-                    128, (5, 5), strides=(1, 1), padding="same", use_bias=False
+                tfkl.Conv2D(
+                    128, (1, 1), strides=(1, 1), padding="valid", use_bias=False
                 ),
                 tfkl.BatchNormalization(),
                 tfkl.ReLU(),
-            ]
-        )
-        self.layer3 = tf.keras.Sequential(
-            [
-                tfkl.Conv2DTranspose(
-                    64, (5, 5), strides=(2, 2), padding="same", use_bias=False
+                tfkl.Conv2D(
+                    128, (3, 3), strides=(1, 1), padding="same", use_bias=False
                 ),
                 tfkl.BatchNormalization(),
                 tfkl.ReLU(),
+                tfkl.Conv2D(
+                    512, (3, 3), strides=(1, 1), padding="same", use_bias=False
+                ),
+                tfkl.BatchNormalization(),
+
             ]
         )
-        self.layer4 = tfkl.Conv2DTranspose(
-            1, (5, 5), strides=(2, 2), padding="same", use_bias=False, activation="tanh"
+
+        self.inter_layer = tf.keras.Sequential(
+            [
+                tfkl.Conv2DTranspose(
+                    256, (4, 4), strides=(2, 2), padding="same", use_bias=False
+                ),
+                tfkl.Conv2D(
+                    256, (3, 3), strides=(1, 1), padding="same", use_bias=False
+                ),
+                tfkl.BatchNormalization(),
+            ]
+        )
+
+        self.residual_layer2 = tf.keras.Sequential(
+            [
+                tfkl.Conv2D(
+                    64, (1, 1), strides=(1, 1), padding="valid", use_bias=False
+                ),
+                tfkl.BatchNormalization(),
+                tfkl.ReLU(),
+                tfkl.Conv2D(
+                    64, (3, 3), strides=(1, 1), padding="same", use_bias=False
+                ),
+                tfkl.BatchNormalization(),
+                tfkl.ReLU(),
+                tfkl.Conv2D(
+                    256, (3, 3), strides=(1, 1), padding="same", use_bias=False
+                ),
+                tfkl.BatchNormalization(),
+            ]
+        )
+        self.last_layer = tf.keras.Sequential(
+            [
+                tfkl.Conv2DTranspose(
+                    128, (4, 4), strides=(2, 2), padding="same", use_bias=False
+                ),
+                tfkl.Conv2D(
+                    128, (3, 3), strides=(1, 1), padding="same", use_bias=False
+                ),
+                tfkl.BatchNormalization(),
+                tfkl.ReLU(),
+                tfkl.Conv2DTranspose(
+                    64, (4, 4), strides=(2, 2), padding="same", use_bias=False
+                ),
+                tfkl.Conv2D(
+                    64, (3, 3), strides=(1, 1), padding="same", use_bias=False
+                ),
+                tfkl.BatchNormalization(),
+                tfkl.ReLU(),
+                tfkl.Conv2DTranspose(
+                    3, (4, 4), strides=(2, 2), padding="same", use_bias=False
+                ),
+                tfkl.Conv2D(
+                    3, (3, 3), strides=(1, 1), padding="same", use_bias=False
+                ),
+                tfkl.tanh()
+            ]
         )
 
     def call(self, x, z):
         x = self.input_layer(x)
         x = tf.concat([z, x], 1)
-        x = self.layer1(x)
-        x = self.layer2(x)
-        x = self.layer3(x)
-        x = self.layer4(x)
+        out1 = self.layer1(x)
+        x = self.residual_layer1(out1)
+        x = tf.add(out1, x)
+        x = tfkl.relu(x)
+        out2 = self.inter_layer(x)
+        x = self.residual_layer2(out2)
+        x = tf.add(out2, x)
+        x = tfkl.relu(x)
+        x = self.last_layer(x)
         return x
 
 
