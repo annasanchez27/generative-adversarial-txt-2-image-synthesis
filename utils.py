@@ -2,7 +2,7 @@ import tensorflow as tf
 from matplotlib import pyplot as plt
 
 
-def display_images(out, label=None, count=False):
+def display_images(out, label=None):
     """Inspired by: https://github.com/Atcold/pytorch-Deep-Learning/blob/master/11-VAE.ipynb"""
     out_pic = tf.reshape(out, [-1, 64, 64, 3])
     plt.figure(figsize=(18, 6))
@@ -10,6 +10,5 @@ def display_images(out, label=None, count=False):
         plt.subplot(1, 4, i + 1)
         plt.imshow(out_pic[i + 4])
         plt.axis("off")
-        if count:
-            plt.title(str(4 + i), color="w")
+        plt.title(label[i + 4])
     plt.show()

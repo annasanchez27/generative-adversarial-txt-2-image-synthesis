@@ -15,13 +15,13 @@ def train(model, config):
         updates_per_epoch = dataset.train.num_examples // config['batch_size']
 
         for idx in range(0, updates_per_epoch):
-            images, wrong_images, embed, _, _ = dataset.train.next_batch(config['batch_size'], 4, embeddings=True,
+            images, wrong_images, embed, captions, _ = dataset.train.next_batch(config['batch_size'], 4, embeddings=True,
                                                                          wrong_img=True)
             discriminator_loss, generator_loss = model(images, embed, wrong_images)
         if epoch % 10 == 0:
             print(f"Epoch {epoch}: discriminator loss is {discriminator_loss} and generator loss is {generator_loss}")
             images_generated = model.generate_sample(embed)
-            display_images(images_generated)
+            display_images(images_generated, captions)
 
 
 def main(config):
