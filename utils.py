@@ -12,3 +12,7 @@ def display_images(out, label=None):
         plt.axis("off")
         plt.title(label[i + 4])
     plt.show()
+
+
+def denormalize_images(images):
+    return ((images + 1.0) * 127.5).astype('uint8')

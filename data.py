@@ -73,8 +73,7 @@ class Dataset(object):
         if name.find('jpg/') != -1:  # flowers dataset
             class_name = 'class_%05d/' % (class_id + 1)  # Class ids are offset by 1 for classification tasks
             name = name.replace('jpg/', class_name)
-        cap_path = '%s/text_c10/%s.txt' %\
-                   (self.workdir, name)
+        cap_path = f'data/text_c10/{name}.txt'
         with open(cap_path, "r") as f:
             captions = f.read().split('\n')
         captions = [cap for cap in captions if len(cap) > 0]
