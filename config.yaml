@@ -1,0 +1,6 @@
+
+batch_size: 64
+epochs: 600
+learning_rate: 0.0002
+momentum: 0.5
+image_dim: 64
