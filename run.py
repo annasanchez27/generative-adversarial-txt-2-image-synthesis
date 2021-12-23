@@ -32,7 +32,7 @@ def train(model, config):
 
 
 def main(config):
-    model = GAN2(config)
+    model = GAN(config)
     train(model, config)
 
 
