@@ -191,20 +191,21 @@ class GAN(tf.keras.Model):
         # Set up optimizers for both models.
         self.generator_optimizer = tf.keras.optimizers.Adam(config['learning_rate'], beta_1=config['momentum'])
         self.discriminator_optimizer = tf.keras.optimizers.Adam(config['learning_rate'], beta_1=config['momentum'])
+        self.cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 
     def discriminator_loss(self, actual_output, generated_output, mismatch_output):
-        real_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(tf.ones_like(actual_output), actual_output))
-        generated_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
+        real_loss = tf.reduce_mean(self.cross_entropy(tf.ones_like(actual_output), actual_output))
+        generated_loss = tf.reduce_mean(self.cross_entropy(
             tf.zeros_like(generated_output), generated_output
         ))
-        mismatch_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
+        mismatch_loss = tf.reduce_mean(self.cross_entropy(
             tf.zeros_like(mismatch_output), mismatch_output
         ))
         total_loss = (mismatch_loss + generated_loss) / 2 + real_loss
         return total_loss
 
     def generator_loss(self, generated_output):
-        return tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(tf.ones_like(generated_output), generated_output))
+        return tf.reduce_mean(self.cross_entropy(tf.ones_like(generated_output), generated_output))
 
     def generate_sample(self, embed):
         noise = tf.random.normal([self.batch_size, self.noise_dim])
