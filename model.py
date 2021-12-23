@@ -246,9 +246,9 @@ class GAN(tf.keras.Model):
         with tf.GradientTape() as discriminator_tape:
             generated_samples = self.generator(noise, embed)
 
-            real_output, _ = self.discriminator(x, embed)
-            fake_output, _ = self.discriminator(generated_samples, embed)
-            mismatch_output, _ = self.discriminator(wrong_images, embed)
+            _, real_output = self.discriminator(x, embed)
+            _, fake_output = self.discriminator(generated_samples, embed)
+            _, mismatch_output = self.discriminator(wrong_images, embed)
 
             discriminator_loss = self.discriminator_loss(real_output, fake_output, mismatch_output)
 
@@ -261,7 +261,7 @@ class GAN(tf.keras.Model):
 
         with tf.GradientTape() as generator_tape:
             generated_samples = self.generator(noise, embed)
-            fake_output, _ = self.discriminator(generated_samples, embed)
+            _, fake_output = self.discriminator(generated_samples, embed)
             generator_loss = self.generator_loss(fake_output)
 
         generator_gradients = generator_tape.gradient(

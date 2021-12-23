@@ -33,10 +33,12 @@ def train(model, config):
 
 def main(config):
     model = GAN(config)
+    print("Starting training..")
     train(model, config)
 
 
 if __name__ == "__main__":
+    print("Starting..")
     wandb.init(project="generative-adversarial-txt-2-image", entity="sebastiaan")
     config = yaml.load(Path("config.yaml").read_text(), Loader=yaml.SafeLoader)
     main(config)
