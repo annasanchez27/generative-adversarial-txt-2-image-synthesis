@@ -6,7 +6,7 @@ import tensorflow.keras.layers as tfkl
 class DCGenerator(tfkl.Layer):
     def __init__(self):
         super(DCGenerator, self).__init__()
-        self.output_size = 32
+        self.output_size = 64
         self.gf_dim = 128
         self.s16 = self.output_size // 16
         self.ReLu = tfkl.Activation(tfa.relu)
@@ -18,7 +18,7 @@ class DCGenerator(tfkl.Layer):
             tfkl.LeakyReLU(),
         ])
         self.input_layer = tf.keras.Sequential([
-            tfkl.Dense(self.gf_dim * 8 * 4 * self.s16 * self.s16, use_bias=False, kernel_initializer=self.initializer),
+            tfkl.Dense(self.gf_dim * 8 * self.s16 * self.s16, use_bias=False, kernel_initializer=self.initializer),
             tfkl.BatchNormalization(gamma_initializer=self.batch_initializer),
             tfkl.ReLU(),
             tfkl.Reshape((4, 4, self.gf_dim * 8)),
