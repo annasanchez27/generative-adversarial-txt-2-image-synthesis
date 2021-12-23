@@ -6,7 +6,7 @@ import tensorflow.keras.layers as tfkl
 class DCGenerator(tfkl.Layer):
     def __init__(self):
         super(DCGenerator, self).__init__()
-        self.output_size = 32
+        self.output_size = 64
         self.gf_dim = 128
         self.s16 = self.output_size // 16
         self.ReLu = tfkl.Activation(tfa.relu)
@@ -120,7 +120,7 @@ class DCGenerator(tfkl.Layer):
 class DCDiscriminator(tfkl.Layer):
     def __init__(self):
         super(DCDiscriminator, self).__init__()
-        self.output_size = 32
+        self.output_size = 64
         self.df_dim = 64
         self.s16 = self.output_size // 16
         self.initializer = tf.keras.initializers.RandomNormal(mean=0., stddev=0.02)
@@ -192,19 +192,21 @@ class GAN(tf.keras.Model):
         self.generator_optimizer = tf.keras.optimizers.Adam(config['learning_rate'], beta_1=config['momentum'])
         self.discriminator_optimizer = tf.keras.optimizers.Adam(config['learning_rate'], beta_1=config['momentum'])
 
+        self.cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+
     def discriminator_loss(self, actual_output, generated_output, mismatch_output):
-        real_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(tf.ones_like(actual_output), actual_output))
-        generated_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
+        real_loss = self.cross_entropy(tf.ones_like(actual_output), actual_output)
+        generated_loss = self.cross_entropy(
             tf.zeros_like(generated_output), generated_output
-        ))
-        mismatch_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
+        )
+        mismatch_loss = self.cross_entropy(
             tf.zeros_like(mismatch_output), mismatch_output
-        ))
+        )
         total_loss = (mismatch_loss + generated_loss) / 2 + real_loss
         return total_loss
 
     def generator_loss(self, generated_output):
-        return tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(tf.ones_like(generated_output), generated_output))
+        return self.cross_entropy(tf.ones_like(generated_output), generated_output)
 
     def generate_sample(self, embed):
         noise = tf.random.normal([self.batch_size, self.noise_dim])
@@ -217,9 +219,9 @@ class GAN(tf.keras.Model):
         with tf.GradientTape() as discriminator_tape, tf.GradientTape() as generator_tape:
             generated_samples = self.generator(noise, embed)
 
-            real_output, _ = self.discriminator(x, embed)
-            fake_output, _ = self.discriminator(generated_samples, embed)
-            mismatch_output, _ = self.discriminator(wrong_images, embed)
+            _, real_output = self.discriminator(x, embed)
+            _, fake_output = self.discriminator(generated_samples, embed)
+            _, mismatch_output = self.discriminator(wrong_images, embed)
 
             discriminator_loss = self.discriminator_loss(real_output, fake_output, mismatch_output)
             generator_loss = self.generator_loss(fake_output)
@@ -240,40 +242,5 @@ class GAN(tf.keras.Model):
 
         return discriminator_loss, generator_loss
 
-    def train_step_new(self, x, embed, wrong_images):
-        noise = tf.random.normal([self.batch_size, self.noise_dim])
-
-        with tf.GradientTape() as discriminator_tape:
-            generated_samples = self.generator(noise, embed)
-
-            real_output, _ = self.discriminator(x, embed)
-            fake_output, _ = self.discriminator(generated_samples, embed)
-            mismatch_output, _ = self.discriminator(wrong_images, embed)
-
-            discriminator_loss = self.discriminator_loss(real_output, fake_output, mismatch_output)
-
-        discriminator_gradients = discriminator_tape.gradient(
-            discriminator_loss, self.discriminator.trainable_variables
-        )
-        self.discriminator_optimizer.apply_gradients(
-            zip(discriminator_gradients, self.discriminator.trainable_variables)
-        )
-
-        with tf.GradientTape() as generator_tape:
-            generated_samples = self.generator(noise, embed)
-            fake_output, _ = self.discriminator(generated_samples, embed)
-            generator_loss = self.generator_loss(fake_output)
-
-        generator_gradients = generator_tape.gradient(
-            generator_loss, self.generator.trainable_variables
-        )
-        self.generator_optimizer.apply_gradients(
-            zip(generator_gradients, self.generator.trainable_variables)
-        )
-
-        return discriminator_loss, generator_loss
-
-    def call(self, x, embed, wrong_images, train_step_new=False):
-        if train_step_new:
-            return self.train_step_new(x, embed, wrong_images)
+    def call(self, x, embed, wrong_images):
         return self.train_step(x, embed, wrong_images)
