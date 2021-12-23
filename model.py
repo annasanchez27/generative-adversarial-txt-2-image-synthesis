@@ -240,5 +240,40 @@ class GAN(tf.keras.Model):
 
         return discriminator_loss, generator_loss
 
-    def call(self, x, embed, wrong_images):
+    def train_step_new(self, x, embed, wrong_images):
+        noise = tf.random.normal([self.batch_size, self.noise_dim])
+
+        with tf.GradientTape() as discriminator_tape:
+            generated_samples = self.generator(noise, embed)
+
+            real_output = self.discriminator(x, embed)
+            fake_output = self.discriminator(generated_samples, embed)
+            mismatch_output = self.discriminator(wrong_images, embed)
+
+            discriminator_loss = self.discriminator_loss(real_output, fake_output, mismatch_output)
+
+        discriminator_gradients = discriminator_tape.gradient(
+            discriminator_loss, self.discriminator.trainable_variables
+        )
+        self.discriminator_optimizer.apply_gradients(
+            zip(discriminator_gradients, self.discriminator.trainable_variables)
+        )
+
+        with tf.GradientTape() as generator_tape:
+            generated_samples = self.generator(noise, embed)
+            fake_output = self.discriminator(generated_samples, embed)
+            generator_loss = self.generator_loss(fake_output)
+
+        generator_gradients = generator_tape.gradient(
+            generator_loss, self.generator.trainable_variables
+        )
+        self.generator_optimizer.apply_gradients(
+            zip(generator_gradients, self.generator.trainable_variables)
+        )
+
+        return discriminator_loss, generator_loss
+
+    def call(self, x, embed, wrong_images, train_step_new=True):
+        if train_step_new:
+            return self.train_step_new(x, embed, wrong_images)
         return self.train_step(x, embed, wrong_images)
