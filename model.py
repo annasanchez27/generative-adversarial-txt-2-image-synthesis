@@ -123,6 +123,8 @@ class DCDiscriminator(tfkl.Layer):
         self.output_size = 32
         self.df_dim = 64
         self.s16 = self.output_size // 16
+        self.initializer = tf.keras.initializers.RandomNormal(mean=0., stddev=0.02)
+        self.batch_initializer = tf.keras.initializers.RandomNormal(mean=1., stddev=0.02)
         self.input_layer = tf.keras.Sequential([
             tfkl.Conv2D(
                 filters=self.df_dim, kernel_size=(4, 4), strides=(2, 2), padding="same"
