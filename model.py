@@ -189,8 +189,8 @@ class GAN(tf.keras.Model):
         self.discriminator = DCDiscriminator()
 
         # Set up optimizers for both models.
-        self.generator_optimizer = tf.keras.optimizers.Adam(config['learning_rate'])
-        self.discriminator_optimizer = tf.keras.optimizers.Adam(config['learning_rate'])
+        self.generator_optimizer = tf.keras.optimizers.Adam(config['learning_rate'], beta_1=config['momentum'])
+        self.discriminator_optimizer = tf.keras.optimizers.Adam(config['learning_rate'], beta_1=config['momentum'])
 
     def discriminator_loss(self, actual_output, generated_output, mismatch_output):
         real_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(tf.ones_like(actual_output), actual_output))
