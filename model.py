@@ -10,81 +10,84 @@ class DCGenerator(tfkl.Layer):
         self.gf_dim = 128
         self.s16 = self.output_size // 16
         self.ReLu = tfkl.Activation(tfa.relu)
+        self.initializer = tf.keras.initializers.RandomNormal(mean=0., stddev=0.02)
+        self.batch_initializer = tf.keras.initializers.RandomNormal(mean=1., stddev=0.02)
+
         self.embedding_layer = tf.keras.Sequential([
             tfkl.Dense(128, activation=None),
             tfkl.LeakyReLU(),
         ])
         self.input_layer = tf.keras.Sequential([
-            tfkl.Dense(self.gf_dim * 8 * 4 * self.s16 * self.s16, use_bias=False),
-            tfkl.BatchNormalization(),
+            tfkl.Dense(self.gf_dim * 8 * 4 * self.s16 * self.s16, use_bias=False, kernel_initializer=self.initializer),
+            tfkl.BatchNormalization(gamma_initializer=self.batch_initializer),
             tfkl.ReLU(),
             tfkl.Reshape((4, 4, self.gf_dim * 8)),
         ])
         self.residual_layer1 = tf.keras.Sequential([
             tfkl.Conv2D(
-                self.gf_dim * 2, (1, 1), strides=(1, 1), padding="valid", use_bias=False
+                self.gf_dim * 2, (1, 1), strides=(1, 1), padding="valid", use_bias=False, kernel_initializer=self.initializer
             ),
-            tfkl.BatchNormalization(),
+            tfkl.BatchNormalization(gamma_initializer=self.batch_initializer),
             tfkl.ReLU(),
             tfkl.Conv2D(
-                self.gf_dim * 2, (3, 3), strides=(1, 1), padding="same", use_bias=False
+                self.gf_dim * 2, (3, 3), strides=(1, 1), padding="same", use_bias=False, kernel_initializer=self.initializer
             ),
-            tfkl.BatchNormalization(),
+            tfkl.BatchNormalization(gamma_initializer=self.batch_initializer),
             tfkl.ReLU(),
             tfkl.Conv2D(
-                self.gf_dim * 8, (3, 3), strides=(1, 1), padding="same", use_bias=False
+                self.gf_dim * 8, (3, 3), strides=(1, 1), padding="same", use_bias=False, kernel_initializer=self.initializer
             ),
-            tfkl.BatchNormalization(),
+            tfkl.BatchNormalization(gamma_initializer=self.batch_initializer),
 
         ])
         self.inter_layer = tf.keras.Sequential([
             tfkl.Conv2DTranspose(
-                self.gf_dim * 4, (4, 4), strides=(2, 2), padding="same", use_bias=False
+                self.gf_dim * 4, (4, 4), strides=(2, 2), padding="same", use_bias=False, kernel_initializer=self.initializer
             ),
             tfkl.Conv2D(
-                self.gf_dim * 4, (3, 3), strides=(1, 1), padding="same", use_bias=False
+                self.gf_dim * 4, (3, 3), strides=(1, 1), padding="same", use_bias=False, kernel_initializer=self.initializer
             ),
-            tfkl.BatchNormalization(),
+            tfkl.BatchNormalization(gamma_initializer=self.batch_initializer),
         ])
 
         self.residual_layer2 = tf.keras.Sequential([
             tfkl.Conv2D(
-                self.gf_dim, (1, 1), strides=(1, 1), padding="valid", use_bias=False
+                self.gf_dim, (1, 1), strides=(1, 1), padding="valid", use_bias=False, kernel_initializer=self.initializer
             ),
-            tfkl.BatchNormalization(),
+            tfkl.BatchNormalization(gamma_initializer=self.batch_initializer),
             tfkl.ReLU(),
             tfkl.Conv2D(
-                self.gf_dim, (3, 3), strides=(1, 1), padding="same", use_bias=False
+                self.gf_dim, (3, 3), strides=(1, 1), padding="same", use_bias=False, kernel_initializer=self.initializer
             ),
-            tfkl.BatchNormalization(),
+            tfkl.BatchNormalization(gamma_initializer=self.batch_initializer),
             tfkl.ReLU(),
             tfkl.Conv2D(
-                self.gf_dim * 4, (3, 3), strides=(1, 1), padding="same", use_bias=False
+                self.gf_dim * 4, (3, 3), strides=(1, 1), padding="same", use_bias=False, kernel_initializer=self.initializer
             ),
-            tfkl.BatchNormalization(),
+            tfkl.BatchNormalization(gamma_initializer=self.batch_initializer),
         ])
         self.last_layer = tf.keras.Sequential([
             tfkl.Conv2DTranspose(
-                self.gf_dim * 2, (4, 4), strides=(2, 2), padding="same", use_bias=False
+                self.gf_dim * 2, (4, 4), strides=(2, 2), padding="same", use_bias=False, kernel_initializer=self.initializer
             ),
             tfkl.Conv2D(
-                self.gf_dim * 2, (3, 3), strides=(1, 1), padding="same", use_bias=False
+                self.gf_dim * 2, (3, 3), strides=(1, 1), padding="same", use_bias=False, kernel_initializer=self.initializer
             ),
-            tfkl.BatchNormalization(),
+            tfkl.BatchNormalization(gamma_initializer=self.batch_initializer),
             tfkl.ReLU(),
             tfkl.Conv2DTranspose(
-                self.gf_dim, (4, 4), strides=(2, 2), padding="same", use_bias=False
+                self.gf_dim, (4, 4), strides=(2, 2), padding="same", use_bias=False, kernel_initializer=self.initializer
             ),
             tfkl.Conv2D(
-                self.gf_dim, (3, 3), strides=(1, 1), padding="same", use_bias=False
+                self.gf_dim, (3, 3), strides=(1, 1), padding="same", use_bias=False, kernel_initializer=self.initializer
             ),
-            tfkl.BatchNormalization(),
+            tfkl.BatchNormalization(gamma_initializer=self.batch_initializer),
             tfkl.ReLU(),
             tfkl.Conv2DTranspose(
-                3, (4, 4), strides=(2, 2), padding="same", use_bias=False
+                3, (4, 4), strides=(2, 2), padding="same", use_bias=False, kernel_initializer=self.initializer
             ),
             tfkl.Conv2D(
-                3, (3, 3), strides=(1, 1), padding="same", use_bias=False
+                3, (3, 3), strides=(1, 1), padding="same", use_bias=False, kernel_initializer=self.initializer
             ),
             tfkl.Activation(tfa.relu),
         ])
@@ -117,26 +120,26 @@ class DCDiscriminator(tfkl.Layer):
             ),
             tfkl.LeakyReLU(0.2),
             tfkl.Conv2D(filters=self.df_dim * 2, kernel_size=(4, 4), strides=(2, 2), padding="same"),
-            tfkl.BatchNormalization(),
+            tfkl.BatchNormalization(gamma_initializer=self.batch_initializer),
             tfkl.LeakyReLU(0.2),
             tfkl.Conv2D(filters=self.df_dim * 4, kernel_size=(4, 4), strides=(2, 2), padding="same"),
-            tfkl.BatchNormalization(),
+            tfkl.BatchNormalization(gamma_initializer=self.batch_initializer),
             tfkl.LeakyReLU(0.2),
             tfkl.Conv2D(filters=self.df_dim * 8, kernel_size=(4, 4), strides=(2, 2), padding="same"),
-            tfkl.BatchNormalization(),
+            tfkl.BatchNormalization(gamma_initializer=self.batch_initializer),
             tfkl.LeakyReLU(0.2),
         ])
 
         # Residual layer
         self.residual_layer = tf.keras.Sequential([
             tfkl.Conv2D(filters=self.df_dim * 2, kernel_size=(1, 1), strides=(1, 1), padding="same"),
-            tfkl.BatchNormalization(),
+            tfkl.BatchNormalization(gamma_initializer=self.batch_initializer),
             tfkl.LeakyReLU(0.2),
             tfkl.Conv2D(filters=self.df_dim * 2, kernel_size=(3, 3), strides=(1, 1), padding="same"),
-            tfkl.BatchNormalization(),
+            tfkl.BatchNormalization(gamma_initializer=self.batch_initializer),
             tfkl.LeakyReLU(0.2),
             tfkl.Conv2D(filters=self.df_dim * 8, kernel_size=(3, 3), strides=(1, 1), padding="same"),
-            tfkl.BatchNormalization(),
+            tfkl.BatchNormalization(gamma_initializer=self.batch_initializer),
         ])
         self.LeakyRelu = tfkl.LeakyReLU(0.2)
         self.embedding_layer = tf.keras.Sequential([
@@ -145,7 +148,7 @@ class DCDiscriminator(tfkl.Layer):
         ])
         self.output_layer = tf.keras.Sequential([
             tfkl.Conv2D(filters=self.df_dim * 8, kernel_size=(1, 1), strides=(1, 1), padding="valid"),
-            tfkl.BatchNormalization(),
+            tfkl.BatchNormalization(gamma_initializer=self.batch_initializer),
             tfkl.LeakyReLU(0.2),
             tfkl.Conv2D(filters=1, kernel_size=(self.s16, self.s16), strides=(self.s16, self.s16), padding="valid"),
         ])
