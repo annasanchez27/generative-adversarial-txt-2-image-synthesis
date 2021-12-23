@@ -3,6 +3,7 @@ import tqdm
 import wandb
 
 from model import GAN
+from model2 import GAN2
 from pathlib import Path
 from data import TextDataset
 from utils import denormalize_images
@@ -31,7 +32,7 @@ def train(model, config):
 
 
 def main(config):
-    model = GAN(config)
+    model = GAN2(config)
     train(model, config)
 
 
