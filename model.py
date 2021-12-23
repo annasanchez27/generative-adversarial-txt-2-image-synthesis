@@ -120,7 +120,7 @@ class DCGenerator(tfkl.Layer):
 class DCDiscriminator(tfkl.Layer):
     def __init__(self):
         super(DCDiscriminator, self).__init__()
-        self.output_size = 32
+        self.output_size = 64
         self.df_dim = 64
         self.s16 = self.output_size // 16
         self.initializer = tf.keras.initializers.RandomNormal(mean=0., stddev=0.02)
