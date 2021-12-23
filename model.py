@@ -25,34 +25,40 @@ class DCGenerator(tfkl.Layer):
         ])
         self.residual_layer1 = tf.keras.Sequential([
             tfkl.Conv2D(
-                self.gf_dim * 2, (1, 1), strides=(1, 1), padding="valid", use_bias=False, kernel_initializer=self.initializer
+                self.gf_dim * 2, (1, 1), strides=(1, 1), padding="valid", use_bias=False,
+                kernel_initializer=self.initializer
             ),
             tfkl.BatchNormalization(gamma_initializer=self.batch_initializer),
             tfkl.ReLU(),
             tfkl.Conv2D(
-                self.gf_dim * 2, (3, 3), strides=(1, 1), padding="same", use_bias=False, kernel_initializer=self.initializer
+                self.gf_dim * 2, (3, 3), strides=(1, 1), padding="same", use_bias=False,
+                kernel_initializer=self.initializer
             ),
             tfkl.BatchNormalization(gamma_initializer=self.batch_initializer),
             tfkl.ReLU(),
             tfkl.Conv2D(
-                self.gf_dim * 8, (3, 3), strides=(1, 1), padding="same", use_bias=False, kernel_initializer=self.initializer
+                self.gf_dim * 8, (3, 3), strides=(1, 1), padding="same", use_bias=False,
+                kernel_initializer=self.initializer
             ),
             tfkl.BatchNormalization(gamma_initializer=self.batch_initializer),
 
         ])
         self.inter_layer = tf.keras.Sequential([
             tfkl.Conv2DTranspose(
-                self.gf_dim * 4, (4, 4), strides=(2, 2), padding="same", use_bias=False, kernel_initializer=self.initializer
+                self.gf_dim * 4, (4, 4), strides=(2, 2), padding="same", use_bias=False,
+                kernel_initializer=self.initializer
             ),
             tfkl.Conv2D(
-                self.gf_dim * 4, (3, 3), strides=(1, 1), padding="same", use_bias=False, kernel_initializer=self.initializer
+                self.gf_dim * 4, (3, 3), strides=(1, 1), padding="same", use_bias=False,
+                kernel_initializer=self.initializer
             ),
             tfkl.BatchNormalization(gamma_initializer=self.batch_initializer),
         ])
 
         self.residual_layer2 = tf.keras.Sequential([
             tfkl.Conv2D(
-                self.gf_dim, (1, 1), strides=(1, 1), padding="valid", use_bias=False, kernel_initializer=self.initializer
+                self.gf_dim, (1, 1), strides=(1, 1), padding="valid", use_bias=False,
+                kernel_initializer=self.initializer
             ),
             tfkl.BatchNormalization(gamma_initializer=self.batch_initializer),
             tfkl.ReLU(),
@@ -62,16 +68,19 @@ class DCGenerator(tfkl.Layer):
             tfkl.BatchNormalization(gamma_initializer=self.batch_initializer),
             tfkl.ReLU(),
             tfkl.Conv2D(
-                self.gf_dim * 4, (3, 3), strides=(1, 1), padding="same", use_bias=False, kernel_initializer=self.initializer
+                self.gf_dim * 4, (3, 3), strides=(1, 1), padding="same", use_bias=False,
+                kernel_initializer=self.initializer
             ),
             tfkl.BatchNormalization(gamma_initializer=self.batch_initializer),
         ])
         self.last_layer = tf.keras.Sequential([
             tfkl.Conv2DTranspose(
-                self.gf_dim * 2, (4, 4), strides=(2, 2), padding="same", use_bias=False, kernel_initializer=self.initializer
+                self.gf_dim * 2, (4, 4), strides=(2, 2), padding="same", use_bias=False,
+                kernel_initializer=self.initializer
             ),
             tfkl.Conv2D(
-                self.gf_dim * 2, (3, 3), strides=(1, 1), padding="same", use_bias=False, kernel_initializer=self.initializer
+                self.gf_dim * 2, (3, 3), strides=(1, 1), padding="same", use_bias=False,
+                kernel_initializer=self.initializer
             ),
             tfkl.BatchNormalization(gamma_initializer=self.batch_initializer),
             tfkl.ReLU(),
