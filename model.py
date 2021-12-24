@@ -15,12 +15,10 @@ class DCGenerator(tfkl.Layer):
 
         self.embedding_layer = tf.keras.Sequential([
             tfkl.Dense(128, activation=None),
-            tfkl.LeakyReLU(),
         ])
         self.input_layer = tf.keras.Sequential([
             tfkl.Dense(self.gf_dim * 8 * self.s16 * self.s16, use_bias=False, kernel_initializer=self.initializer),
             tfkl.BatchNormalization(gamma_initializer=self.batch_initializer),
-            tfkl.ReLU(),
             tfkl.Reshape((4, 4, self.gf_dim * 8)),
         ])
         self.residual_layer1 = tf.keras.Sequential([
@@ -101,7 +99,7 @@ class DCGenerator(tfkl.Layer):
             tfkl.Activation(tfa.tanh),
         ])
 
-    def call(self, z, embed):
+    def call(self, z, embed, training=True):
         embed = self.embedding_layer(embed)
         x = tf.concat([z, embed], 1)
         out_input = self.input_layer(x)
@@ -155,7 +153,7 @@ class DCDiscriminator(tfkl.Layer):
         self.LeakyRelu = tfkl.LeakyReLU(0.2)
         self.embedding_layer = tf.keras.Sequential([
             tfkl.Dense(128, activation=None),
-            tfkl.LeakyReLU(),
+            tfkl.LeakyReLU(0.2),
         ])
         self.output_layer = tf.keras.Sequential([
             tfkl.Conv2D(filters=self.df_dim * 8, kernel_size=(1, 1), strides=(1, 1), padding="valid"),
@@ -165,7 +163,7 @@ class DCDiscriminator(tfkl.Layer):
         ])
         self.Sigmoid = tfkl.Activation(tfa.sigmoid)
 
-    def call(self, x, embed):
+    def call(self, x, embed, training=True):
         out1 = self.input_layer(x)
         x = self.residual_layer(out1)
         x = tf.add(x, out1)
@@ -197,7 +195,7 @@ class GAN(tf.keras.Model):
     def discriminator_loss(self, actual_output, generated_output, mismatch_output):
         real_loss = self.cross_entropy(tf.ones_like(actual_output), actual_output)
         generated_loss = self.cross_entropy(
-            tf.zeros_like(generated_output), generated_output
+            tf.fill(dims=generated_output.shape, value=0.9), generated_output
         )
         mismatch_loss = self.cross_entropy(
             tf.zeros_like(mismatch_output), mismatch_output
@@ -208,20 +206,20 @@ class GAN(tf.keras.Model):
     def generator_loss(self, generated_output):
         return self.cross_entropy(tf.ones_like(generated_output), generated_output)
 
-    def generate_sample(self, embed):
+    def generate_sample(self, embed, training=False):
         noise = tf.random.normal([self.batch_size, self.noise_dim])
-        generated_sample = self.generator(noise, embed)
+        generated_sample = self.generator(noise, embed, training=training)
         return generated_sample
 
     def train_step(self, x, embed, wrong_images):
         noise = tf.random.normal([self.batch_size, self.noise_dim])
 
         with tf.GradientTape() as discriminator_tape, tf.GradientTape() as generator_tape:
-            generated_samples = self.generator(noise, embed)
+            generated_samples = self.generator(noise, embed, training=True)
 
-            _, real_output = self.discriminator(x, embed)
-            _, fake_output = self.discriminator(generated_samples, embed)
-            _, mismatch_output = self.discriminator(wrong_images, embed)
+            _, real_output = self.discriminator(x, embed, training=True)
+            _, fake_output = self.discriminator(generated_samples, embed, training=True)
+            _, mismatch_output = self.discriminator(wrong_images, embed, training=True)
 
             discriminator_loss = self.discriminator_loss(real_output, fake_output, mismatch_output)
             generator_loss = self.generator_loss(fake_output)
@@ -242,5 +240,5 @@ class GAN(tf.keras.Model):
 
         return discriminator_loss, generator_loss
 
-    def call(self, x, embed, wrong_images):
-        return self.train_step(x, embed, wrong_images)
+    def call(self, x, embed, wrong_images, training=True):
+        return self.train_step(x, embed, wrong_images, training=training)

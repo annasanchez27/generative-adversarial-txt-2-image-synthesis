@@ -1,9 +1,11 @@
 import yaml
 import tqdm
 import wandb
+import numpy as np
 
 from model import GAN
 from model2 import GAN2
+from random import randint
 from pathlib import Path
 from data import TextDataset
 from utils import denormalize_images
@@ -23,10 +25,9 @@ def train(model, config):
             discriminator_loss, generator_loss = model(images, embed, wrong_images)
             wandb.log({"discriminator_loss": discriminator_loss, "generator_loss": generator_loss})
 
-        images, _, embed, captions, _ = dataset.train.next_batch(
-            config['batch_size'], 1, embeddings=True,
-            wrong_img=False)
-        images_generated = model.generate_sample(embed)
+        _, sample_embed, _, captions = dataset.test.next_batch_test(config["batch_size"], randint(0, config["batch_size"]), 1)
+        sample_embed = np.squeeze(sample_embed, axis=0)
+        images_generated = model.generate_sample(sample_embed)
         images_generated = denormalize_images(images_generated.numpy())
         wandb.log({"images": [wandb.Image(images_generated[i]) for i in range(4)], "captions": [wandb.Html(captions[i]) for i in range(4)]})
 
