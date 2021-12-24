@@ -29,7 +29,7 @@ def train(model, config):
         sample_embed = np.squeeze(sample_embed, axis=0)
         images_generated = model.generate_sample(sample_embed)
         images_generated = denormalize_images(images_generated.numpy())
-        wandb.log({"images": [wandb.Image(images_generated[i]) for i in range(4)], "captions": [wandb.Html(captions[i]) for i in range(4)]})
+        wandb.log({"images": [wandb.Image(images_generated[i]) for i in range(4)]})
 
 
 def main(config):
