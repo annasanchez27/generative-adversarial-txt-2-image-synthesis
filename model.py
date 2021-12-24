@@ -193,9 +193,9 @@ class GAN(tf.keras.Model):
         self.cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 
     def discriminator_loss(self, actual_output, generated_output, mismatch_output):
-        real_loss = self.cross_entropy(tf.ones_like(actual_output), actual_output)
+        real_loss = self.cross_entropy(tf.fill(dims=actual_output.shape, value=0.9), actual_output)
         generated_loss = self.cross_entropy(
-            tf.fill(dims=generated_output.shape, value=0.9), generated_output
+            tf.zeros_like(generated_output), generated_output
         )
         mismatch_loss = self.cross_entropy(
             tf.zeros_like(mismatch_output), mismatch_output
