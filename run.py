@@ -20,9 +20,9 @@ def train(model, config):
         updates_per_epoch = dataset.train.num_examples // config['batch_size']
 
         for _ in tqdm.tqdm(range(0, updates_per_epoch)):
-            images, wrong_images, embed, captions, _ = dataset.train.next_batch(config['batch_size'], 4, embeddings=True,
-                                                                         wrong_img=True)
-            discriminator_loss, generator_loss = model(images, embed, wrong_images)
+            images, wrong_images, embed, captions, _, interpolated_embed = dataset.train.next_batch(config['batch_size'], 4, embeddings=True,
+                                                                         wrong_img=True, interpolated_embeddings=True)
+            discriminator_loss, generator_loss = model(images, embed, wrong_images, interpolated_embed)
             wandb.log({"discriminator_loss": discriminator_loss, "generator_loss": generator_loss})
 
         _, sample_embed, _, captions = dataset.test.next_batch_test(config["batch_size"], randint(0, config["batch_size"]), 1)

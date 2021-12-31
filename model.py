@@ -203,26 +203,31 @@ class GAN(tf.keras.Model):
         total_loss = (mismatch_loss + generated_loss) / 2 + real_loss
         return total_loss
 
-    def generator_loss(self, generated_output):
-        return self.cross_entropy(tf.ones_like(generated_output), generated_output)
+    def generator_loss(self, generated_output, fake_int_output):
+        generated_loss = self.cross_entropy(tf.ones_like(generated_output), generated_output)
+        generated_loss_int = self.cross_entropy(tf.ones_like(fake_int_output), fake_int_output)
+        return generated_loss + generated_loss_int
 
     def generate_sample(self, embed, training=False):
         noise = tf.random.normal([self.batch_size, self.noise_dim])
         generated_sample = self.generator(noise, embed, training=training)
         return generated_sample
 
-    def train_step(self, x, embed, wrong_images, training):
+    def train_step(self, x, embed, wrong_images, embed_int, training):
         noise = tf.random.normal([self.batch_size, self.noise_dim])
+        noise_int = tf.random.normal([self.batch_size, self.noise_dim])
 
         with tf.GradientTape() as discriminator_tape, tf.GradientTape() as generator_tape:
             generated_samples = self.generator(noise, embed, training=training)
+            generated_samples_int = self.generator(noise_int, embed_int, training=training)
 
             _, real_output = self.discriminator(x, embed, training=training)
             _, fake_output = self.discriminator(generated_samples, embed, training=training)
+            _, fake_int_output = self.discriminator(generated_samples_int, embed_int, training=training)
             _, mismatch_output = self.discriminator(wrong_images, embed, training=training)
 
             discriminator_loss = self.discriminator_loss(real_output, fake_output, mismatch_output)
-            generator_loss = self.generator_loss(fake_output)
+            generator_loss = self.generator_loss(fake_output, fake_int_output)
 
         generator_gradients = generator_tape.gradient(
             generator_loss, self.generator.trainable_variables
@@ -240,5 +245,5 @@ class GAN(tf.keras.Model):
 
         return discriminator_loss, generator_loss
 
-    def call(self, x, embed, wrong_images, training=True):
-        return self.train_step(x, embed, wrong_images, training=training)
+    def call(self, x, embed, wrong_images, embed_int, training=True):
+        return self.train_step(x, embed, wrong_images, embed_int, training=training)

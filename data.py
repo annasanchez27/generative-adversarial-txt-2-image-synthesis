@@ -118,7 +118,7 @@ class Dataset(object):
             sampled_embeddings_array = np.array(sampled_embeddings)
             return np.squeeze(sampled_embeddings_array), sampled_captions
 
-    def next_batch(self, batch_size, window=None, wrong_img=False, embeddings=False, labels=False):
+    def next_batch(self, batch_size, window=None, wrong_img=False, embeddings=False, labels=False, interpolated_embeddings=False):
         """Return the next `batch_size` examples from this data set.
         :arg batch_size: the size of the batch
         :arg window: the number of embeddings whose mean to be returned (maximum is 5)
@@ -177,6 +177,26 @@ class Dataset(object):
         if self._labels is not None and labels:
             class_id = [self._class_id[i] for i in current_ids]
             ret_list.append(class_id)
+        else:
+            ret_list.append(None)
+
+        if self._embeddings is not None and interpolated_embeddings:
+            ids = [random.randint(0, self._num_examples - 1) for i in range(batch_size)]
+            filenames = [self._filenames[i] for i in ids]
+            class_id = [self._class_id[i] for i in ids]
+            sampled_embeddings_1, _ = \
+                self.sample_embeddings(self._embeddings[ids],
+                                       filenames, class_id, window)
+
+            ids = [random.randint(0, self._num_examples - 1) for i in range(batch_size)]
+            filenames = [self._filenames[i] for i in ids]
+            class_id = [self._class_id[i] for i in ids]
+            sampled_embeddings_2, _ = \
+                self.sample_embeddings(self._embeddings[ids],
+                                       filenames, class_id, window)
+            sampled_embeddings = (sampled_embeddings_1 + sampled_embeddings_2) / 2
+
+            ret_list.append(sampled_embeddings)
         else:
             ret_list.append(None)
         return ret_list
