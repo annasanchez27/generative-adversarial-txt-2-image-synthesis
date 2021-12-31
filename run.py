@@ -34,21 +34,22 @@ def train(model, config):
         wandb.log({"images": [wandb.Image(images_generated[i], caption=captions[i]) for i in range(4)]})
 
         if epoch % 10 == 0:
-            print("Saving model...")
-            model.save("model.h5")
+            print("Saving weights...")
+            model.save_weights('latest_checkpoint')
 
 
 def main(config):
     parser = argparse.ArgumentParser(description="IDK")
     parser.add_argument("--load_model", type=bool, default=False)
     args = parser.parse_args()
+    model = GAN(config)
 
-    if args.load_model and os.path.isfile("model.h5"):
-        print("Loading model...")
-        model = tf.keras.models.load_model("model.h5")
+    if args.load_model and os.path.isfile("latest_checkpoint"):
+        print("Loading weights...")
+        model.load_weights("latest_checkpoint")
     else:
         print("Initiating new model...")
-        model = GAN(config)
+
     train(model, config)
 
 
