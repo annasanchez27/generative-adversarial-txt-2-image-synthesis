@@ -35,7 +35,7 @@ def train(model, config):
 
         if epoch % 10 == 0:
             print("Saving model...")
-            # model.save("model")
+            model.save("model.h5")
 
 
 def main(config):
@@ -43,9 +43,9 @@ def main(config):
     parser.add_argument("--load_model", type=bool, default=False)
     args = parser.parse_args()
 
-    if args.load_model and os.path.isfile("model"):
+    if args.load_model and os.path.isfile("model.h5"):
         print("Loading model...")
-        model = tf.keras.models.load_model("model")
+        model = tf.keras.models.load_model("model.h5")
     else:
         print("Initiating new model...")
         model = GAN(config)
