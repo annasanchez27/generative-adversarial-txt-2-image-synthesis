@@ -1,10 +1,12 @@
 import yaml
 import tqdm
 import wandb
+import argparse
 import numpy as np
+import tensorflow as tf
 
 from model import GAN
-from model2 import GAN2
+import os.path
 from random import randint
 from pathlib import Path
 from data import TextDataset
@@ -31,9 +33,21 @@ def train(model, config):
         images_generated = denormalize_images(images_generated.numpy())
         wandb.log({"images": [wandb.Image(images_generated[i], caption=captions[i]) for i in range(4)]})
 
+        if epoch % 10 == 0:
+            model.save("model")
+
 
 def main(config):
-    model = GAN(config)
+    parser = argparse.ArgumentParser(description="IDK")
+    parser.add_argument("--load_model", type=bool, default=False)
+    args = parser.parse_args()
+
+    if args.load_model and os.path.isfile("model"):
+        print("Loading model...")
+        model = tf.keras.models.load_model("model")
+    else:
+        print("Initiating new model...")
+        model = GAN(config)
     train(model, config)
 
 
