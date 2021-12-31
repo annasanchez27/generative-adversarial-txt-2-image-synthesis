@@ -34,6 +34,7 @@ def train(model, config):
         wandb.log({"images": [wandb.Image(images_generated[i], caption=captions[i]) for i in range(4)]})
 
         if epoch % 10 == 0:
+            print("Saving model...")
             model.save("model")
 
 
