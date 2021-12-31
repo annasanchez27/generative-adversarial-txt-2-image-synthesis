@@ -27,7 +27,7 @@ def train(model, config):
             discriminator_loss, generator_loss = model(images, embed, wrong_images, interpolated_embed)
             wandb.log({"discriminator_loss": discriminator_loss, "generator_loss": generator_loss})
 
-        _, sample_embed, _, captions = dataset.test.get_inference_batch(5)
+        _, sample_embed, _, captions = dataset.test.get_inference_batch(config['batch_size'])
         sample_embed = np.squeeze(sample_embed, axis=0)
         for _ in range(8):
             images_generated = model.generate_sample(sample_embed)
