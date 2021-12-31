@@ -27,15 +27,12 @@ def train(model, config):
             discriminator_loss, generator_loss = model(images, embed, wrong_images, interpolated_embed)
             wandb.log({"discriminator_loss": discriminator_loss, "generator_loss": generator_loss})
 
-        _, sample_embed, _, captions = dataset.test.next_batch_test(config["batch_size"], randint(0, config["batch_size"]), 1)
+        _, sample_embed, _, captions = dataset.test.get_inference_batch(5)
         sample_embed = np.squeeze(sample_embed, axis=0)
-        images_generated = model.generate_sample(sample_embed)
-        images_generated = denormalize_images(images_generated.numpy())
-        wandb.log({"images": [wandb.Image(images_generated[i], caption=captions[i]) for i in range(4)]})
-
-        if epoch % 10 == 0:
-            print("Saving weights...")
-            model.save_weights('latest_checkpoint')
+        for _ in range(8):
+            images_generated = model.generate_sample(sample_embed)
+            images_generated = denormalize_images(images_generated.numpy())
+            wandb.log({"images": [wandb.Image(images_generated[i], caption=captions[i][0]) for i in range(4)]})
 
 
 def main(config):
@@ -43,13 +40,6 @@ def main(config):
     parser.add_argument("--load_model", type=bool, default=False)
     args = parser.parse_args()
     model = GAN(config)
-
-    if args.load_model and os.path.isfile("latest_checkpoint"):
-        print("Loading weights...")
-        model.load_weights("latest_checkpoint")
-    else:
-        print("Initiating new model...")
-
     train(model, config)
 
 

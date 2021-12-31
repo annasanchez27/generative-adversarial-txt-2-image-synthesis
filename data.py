@@ -201,6 +201,36 @@ class Dataset(object):
             ret_list.append(None)
         return ret_list
 
+    def get_inference_batch(self, batch_size):
+        start = 0
+        end = batch_size
+        max_captions = 1
+
+        sampled_images = self._images[start:end]
+        sampled_images = sampled_images.astype(np.float32)
+        sampled_images = sampled_images * (2. / 255) - 1.
+        sampled_images = self.transform(sampled_images)
+
+        sampled_embeddings = self._embeddings[start:end]
+        _, embedding_num, _ = sampled_embeddings.shape
+        sampled_embeddings_batchs = []
+
+        sampled_captions = []
+        sampled_filenames = self._filenames[start:end]
+        sampled_class_id = self._class_id[start:end]
+        for i in range(len(sampled_filenames)):
+            captions = self.readCaptions(sampled_filenames[i],
+                                         sampled_class_id[i])
+            sampled_captions.append(captions)
+
+        for i in range(np.minimum(max_captions, embedding_num)):
+            batch = sampled_embeddings[:, i, :]
+            sampled_embeddings_batchs.append(np.squeeze(batch))
+
+        return [sampled_images, sampled_embeddings_batchs,
+                self._saveIDs[start:end], sampled_captions]
+
+
     def next_batch_test(self, batch_size, start, max_captions):
         """Return the next `batch_size` examples from this data set."""
         if (start + batch_size) > self._num_examples:
