@@ -24,7 +24,7 @@ def train(model, config):
         for _ in tqdm.tqdm(range(0, updates_per_epoch)):
             images, wrong_images, embed, captions, _, interpolated_embed = dataset.train.next_batch(config['batch_size'], 4, embeddings=True,
                                                                          wrong_img=True, interpolated_embeddings=True)
-            discriminator_loss, generator_loss = model(images, embed, wrong_images, interpolated_embed)
+            discriminator_loss, generator_loss = model(images, embed, wrong_images, interpolated_embed, epoch_int=epoch)
             wandb.log({"discriminator_loss": discriminator_loss, "generator_loss": generator_loss})
 
         _, sample_embed, _, captions = dataset.test.get_inference_batch(config['batch_size'])

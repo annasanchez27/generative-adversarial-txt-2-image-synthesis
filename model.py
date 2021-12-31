@@ -213,13 +213,18 @@ class GAN(tf.keras.Model):
         generated_sample = self.generator(noise, embed, training=training)
         return generated_sample
 
-    def train_step(self, x, embed, wrong_images, embed_int, training):
+    def train_step(self, x, embed, wrong_images, embed_int, training, epoch_int=1):
         noise = tf.random.normal([self.batch_size, self.noise_dim])
         noise_int = tf.random.normal([self.batch_size, self.noise_dim])
+        std_dev = 1.0 - epoch_int/600
+
+        x = x + tf.random.normal(tf.shape(x), mean=0.0, stddev=std_dev)
 
         with tf.GradientTape() as discriminator_tape, tf.GradientTape() as generator_tape:
             generated_samples = self.generator(noise, embed, training=training)
             generated_samples_int = self.generator(noise_int, embed_int, training=training)
+            generated_samples = generated_samples + tf.random.normal(tf.shape(generated_samples), mean=0.0, stddev=std_dev)
+            generated_samples_int = generated_samples_int + tf.random.normal(tf.shape(generated_samples_int), mean=0.0, stddev=std_dev)
 
             _, real_output = self.discriminator(x, embed, training=training)
             _, fake_output = self.discriminator(generated_samples, embed, training=training)
@@ -245,5 +250,5 @@ class GAN(tf.keras.Model):
 
         return discriminator_loss, generator_loss
 
-    def call(self, x, embed, wrong_images, embed_int, training=True):
-        return self.train_step(x, embed, wrong_images, embed_int, training=training)
+    def call(self, x, embed, wrong_images, embed_int, training=True, epoch_int=1):
+        return self.train_step(x, embed, wrong_images, embed_int, training=training, epoch_int=epoch_int)
