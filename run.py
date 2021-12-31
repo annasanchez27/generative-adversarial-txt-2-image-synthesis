@@ -35,7 +35,7 @@ def train(model, config):
 
         if epoch % 10 == 0:
             print("Saving model...")
-            model.save("model")
+            # model.save("model")
 
 
 def main(config):
