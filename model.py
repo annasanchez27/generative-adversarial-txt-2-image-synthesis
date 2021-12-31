@@ -216,7 +216,7 @@ class GAN(tf.keras.Model):
     def train_step(self, x, embed, wrong_images, embed_int, training, epoch_int=1):
         noise = tf.random.normal([self.batch_size, self.noise_dim])
         noise_int = tf.random.normal([self.batch_size, self.noise_dim])
-        std_dev = 1.0 - epoch_int/600
+        std_dev = 0.1 - epoch_int/6000
 
         x = x + tf.random.normal(tf.shape(x), mean=0.0, stddev=std_dev)
 
