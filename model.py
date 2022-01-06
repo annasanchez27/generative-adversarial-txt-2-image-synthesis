@@ -177,8 +177,10 @@ class DCDiscriminator(tfkl.Layer):
 
 
 class GAN(tf.keras.Model):
-    def __init__(self, config):
+    def __init__(self, config, mode):
         super(GAN, self).__init__()
+
+        self.mode = mode
 
         self.noise_dim = 100
         self.batch_size = config['batch_size']
@@ -192,21 +194,26 @@ class GAN(tf.keras.Model):
 
         self.cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 
-    def discriminator_loss(self, actual_output, generated_output, mismatch_output):
+    def discriminator_loss(self, actual_output, generated_output, mismatch_output=None):
         real_loss = self.cross_entropy(tf.fill(dims=tf.shape(actual_output), value=0.9), actual_output)
         generated_loss = self.cross_entropy(
             tf.zeros_like(generated_output), generated_output
         )
-        mismatch_loss = self.cross_entropy(
-            tf.zeros_like(mismatch_output), mismatch_output
-        )
-        total_loss = (mismatch_loss + generated_loss) / 2 + real_loss
-        return total_loss
+        if self.mode == "CLS" or self.mode == "CLS-INT":
+            mismatch_loss = self.cross_entropy(
+                tf.zeros_like(mismatch_output), mismatch_output
+            )
+            total_loss = (mismatch_loss + generated_loss) / 2 + real_loss
+            return total_loss
+        else:
+            return generated_loss + real_loss
 
-    def generator_loss(self, generated_output, fake_int_output):
+    def generator_loss(self, generated_output, fake_int_output=None):
         generated_loss = self.cross_entropy(tf.ones_like(generated_output), generated_output)
-        generated_loss_int = self.cross_entropy(tf.ones_like(fake_int_output), fake_int_output)
-        return generated_loss + generated_loss_int
+        if self.mode == "INT":
+            generated_loss_int = self.cross_entropy(tf.ones_like(fake_int_output), fake_int_output)
+            return generated_loss + generated_loss_int
+        return generated_loss
 
     def generate_sample(self, embed, training=False):
         noise = tf.random.normal([self.batch_size, self.noise_dim])
@@ -222,14 +229,23 @@ class GAN(tf.keras.Model):
 
         with tf.GradientTape() as discriminator_tape, tf.GradientTape() as generator_tape:
             generated_samples = self.generator(noise, embed, training=training)
-            generated_samples_int = self.generator(noise_int, embed_int, training=training)
-            generated_samples = generated_samples + tf.random.normal(tf.shape(generated_samples), mean=0.0, stddev=std_dev)
-            generated_samples_int = generated_samples_int + tf.random.normal(tf.shape(generated_samples_int), mean=0.0, stddev=std_dev)
+            generated_samples = generated_samples + tf.random.normal(tf.shape(generated_samples),
+                                                                     mean=0.0, stddev=std_dev)
+            if self.mode == "INT":
+                generated_samples_int = self.generator(noise_int, embed_int, training=training)
+                generated_samples_int = generated_samples_int + tf.random.normal(
+                    tf.shape(generated_samples_int), mean=0.0, stddev=std_dev)
+                _, fake_int_output = self.discriminator(generated_samples_int, embed_int,
+                                                        training=training)
+            else:
+                fake_int_output = None
 
             _, real_output = self.discriminator(x, embed, training=training)
             _, fake_output = self.discriminator(generated_samples, embed, training=training)
-            _, fake_int_output = self.discriminator(generated_samples_int, embed_int, training=training)
-            _, mismatch_output = self.discriminator(wrong_images, embed, training=training)
+            if self.mode == "CLS" or self.mode == "CLS-INT":
+                _, mismatch_output = self.discriminator(wrong_images, embed, training=training)
+            else:
+                mismatch_output = None
 
             discriminator_loss = self.discriminator_loss(real_output, fake_output, mismatch_output)
             generator_loss = self.generator_loss(fake_output, fake_int_output)

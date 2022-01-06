@@ -3,11 +3,8 @@ import tqdm
 import wandb
 import argparse
 import numpy as np
-import tensorflow as tf
 
 from model import GAN
-import os.path
-from random import randint
 from pathlib import Path
 from data import TextDataset
 from utils import denormalize_images
@@ -36,10 +33,11 @@ def train(model, config):
 
 
 def main(config):
-    parser = argparse.ArgumentParser(description="IDK")
+    parser = argparse.ArgumentParser(description="text-to-image-synthesis")
     parser.add_argument("--load_model", type=bool, default=False)
+    parser.add_argument("--mode", type=str, default="CLS-INT")  # Can be CLS, INT, and CLS-INT
     args = parser.parse_args()
-    model = GAN(config)
+    model = GAN(config, args.mode)
     train(model, config)
 
 
