@@ -26,10 +26,9 @@ def train(model, config):
 
         _, sample_embed, _, captions = dataset.test.get_inference_batch(config['batch_size'])
         sample_embed = np.squeeze(sample_embed, axis=0)
-        for _ in range(8):
-            images_generated = model.generate_sample(sample_embed)
-            images_generated = denormalize_images(images_generated.numpy())
-            wandb.log({"images": [wandb.Image(images_generated[i], caption=captions[i][0]) for i in range(4)]})
+        images_generated = model.generate_sample(sample_embed)
+        images_generated = denormalize_images(images_generated.numpy())
+        wandb.log({"images": [wandb.Image(images_generated[i], caption=captions[i][0]) for i in range(16)]})
 
 
 def main(config):
